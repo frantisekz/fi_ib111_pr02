@@ -171,7 +171,7 @@ def get_deputy_party(deputy_id):
         if deputy[0] == deputy_id:
             return deputy[3]
 
-def single_dominant_voting(voting_id, voting_pointer, party_id):
+def single_dominant_voting(voting_id, party_id):
     """
     finds dominant result for one voting/party combination
     """
@@ -179,45 +179,56 @@ def single_dominant_voting(voting_id, voting_pointer, party_id):
     result = "UNK"
     for deputy in deputies:
         if deputy[3] == party_id:
-            if deputy[0] == votings[voting_pointer][1][0]:
-                if votings[voting_pointer][1][1] == "A":
-                    dominance_result[0] += 1
-                if votings[voting_pointer][1][1] == "B":
-                    dominance_result[1] += 1
+            for voting in votings:
+                if voting[0] == voting_id:
+                    if deputy[0] == voting[1][0]:
+                        if voting[1][1] == "A":
+                            dominance_result[0] += 1
+                        if voting[1][1] == "B":
+                            dominance_result[1] += 1
     if dominance_result[0] > dominance_result[1]:
         result = "A"
     if dominance_result[0] < dominance_result[1]:
         result = "B"
     return result
 
-def single_party_voting_difference(voting_id, voting_pointer, dominant, party_id):
+def single_party_voting_difference(voting_id, dominant, party_id):
     voted_dominant = 0
     total = 0
-    for deputy in deputies:
-        if deputy[3] == party_id:
-            if deputy[0] == votings[voting_pointer][1][0]:
-                if votings[voting_pointer][1][1] != dominant:
-                    voted_dominant += 1
-                    total += 1
-                else:
-                    total += 1
+    for voting in votings:
+        if voting[0] == voting_id:
+            for deputy in deputies:
+                if deputy[3] == party_id:
+                    #print("Comparing deputy id: " + str(deputy[0]) + " with deputy id: " + str(voting[1][0]))
+                    if deputy[0] == voting[1][0]:
+                        if voting[1][1] == dominant:
+                            voted_dominant += 1
+                            total += 1
+                        elif voting[1][1] == "B":
+                            total += 1
     if total != 0:
+        #print("Voted dominantly: " + str(voted_dominant) + "; out of total: " + str(total))
         return voted_dominant/total
     else:
         return 0
 
 def dominant_votings():
-    i = 0
+    i = 1
     differences = {}
-    for voting in votings:
-        for party in parties:
-            actual_dominance = single_dominant_voting(voting[0], i, party[0])
+    for party in parties:
+        for voting in votings:
+            actual_dominance = single_dominant_voting(voting[0], party[0])
             if actual_dominance != "UNK":
                 try:
-                    differences[party[0]] = (differences[party[0]] + single_party_voting_difference(voting[0], i, actual_dominance, party[0])) / 2
+                    differences[party[0]] = differences[party[0]] + single_party_voting_difference(voting[0], actual_dominance, party[0])
+                    i += 1
                 except:
-                    differences[party[0]] = single_party_voting_difference(voting[0], i, actual_dominance, party[0])
-        i += 1
+                    differences[party[0]] = single_party_voting_difference(voting[0], actual_dominance, party[0])
+        try:
+            differences[party[0]] = differences[party[0]] / i
+        except:
+            i = i
+        i = 1
     return differences
 
 votings = load_votings(VOTINGS_FILE)
