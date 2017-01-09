@@ -57,7 +57,7 @@ def load_votings(votings_file):
     with open(votings_file) as fp:
         for line in fp:
             line_split = line.split("|")
-            print("Processing line " + str(i) + " out of " + str(num_lines))
+            #print("Processing line " + str(i) + " out of " + str(num_lines))
             append_blank = [int(line_split[1]), [int(line_split[0]), line_split[2]]]
             votings.append(append_blank)
             j += 1
@@ -191,17 +191,18 @@ def single_dominant_voting(voting_id, voting_pointer, party_id):
     return result
 
 def single_party_voting_difference(voting_id, voting_pointer, dominant, party_id):
-    difference = [0, 0]
+    voted_dominant = 0
+    total = 0
     for deputy in deputies:
         if deputy[3] == party_id:
             if deputy[0] == votings[voting_pointer][1][0]:
                 if votings[voting_pointer][1][1] != dominant:
-                    difference[0] += 1
-                    difference[1] += 1
+                    voted_dominant += 1
+                    total += 1
                 else:
-                    difference[1] += 1
-    if difference[1] != 0:
-        return difference[0]/difference[1]
+                    total += 1
+    if total != 0:
+        return voted_dominant/total
     else:
         return 0
 
